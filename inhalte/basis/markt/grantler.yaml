@@ -1,0 +1,12 @@
+id: grantler
+name: Grantler
+typ: markt
+kosten: 4
+region: wien
+tags:
+- gast
+effekte:
+- geld: 2
+- gegner_ablegen: 1
+flavor: „Bei der Konkurrenz is' eh no schlimmer.“
+autor: wirt

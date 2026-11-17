@@ -1,0 +1,10 @@
+id: musikpavillon
+name: Musikpavillon
+typ: ausbau
+region: alle
+kosten: 4
+ruf: 2
+jede_runde:
+- kaufen: 1
+flavor: Die Blasmusik spielt jeden Sonntag.
+autor: wirt

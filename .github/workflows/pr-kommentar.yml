@@ -1,0 +1,49 @@
+# Postet den Simulationsbericht als Kommentar in den PR.
+# Läuft im Kontext des Haupt-Repos (Schreibrechte), führt aber KEINEN Code
+# aus dem PR aus – er liest nur das Artefakt (Text) aus dem CI-Lauf.
+name: PR-Kommentar
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  actions: read
+
+jobs:
+  kommentar:
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: simulationsbericht
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('pr-nummer.txt')) { core.info('Kein Bericht vorhanden.'); return; }
+            const nr = parseInt(fs.readFileSync('pr-nummer.txt', 'utf8').trim(), 10);
+            if (!Number.isInteger(nr)) { core.setFailed('Ungültige PR-Nummer'); return; }
+            // Die PR-Nummer stammt aus einem Artefakt, das ein Fork beeinflussen kann.
+            // Darum prüfen, dass der PR wirklich zu genau diesem CI-Lauf gehört.
+            const { owner, repo } = context.repo;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: nr });
+            if (pr.head.sha !== context.payload.workflow_run.head_sha) {
+              // Entweder veraltet (inzwischen neuer Push) oder manipuliert: nichts posten.
+              core.warning(`PR #${nr} passt nicht zu diesem CI-Lauf, kein Kommentar.`); return;
+            }
+            const marke = '<!-- zgm-simulation -->';
+            const body = marke + '\n' + fs.readFileSync('bericht.md', 'utf8').slice(0, 60000);
+            const alle = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: nr });
+            const alt = alle.find(c => c.body && c.body.startsWith(marke));
+            if (alt) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: alt.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: nr, body });
+            }

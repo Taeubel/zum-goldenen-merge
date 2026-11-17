@@ -1,0 +1,32 @@
+# Neue Spielversion: git tag v0.2.0 && git push --tags
+# Erzeugt ein GitHub-Release mit Print-and-Play-PDFs und automatischen Release Notes
+# (Kategorien siehe .github/release.yml).
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python tools/pruefen.py && python -m pytest -q
+      - run: python tools/karten_bauen.py --nur-stabil
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp REGELN.md "build/REGELN-${GITHUB_REF_NAME}.md"
+          gh release create "$GITHUB_REF_NAME" \
+            build/print-and-play.pdf build/kartenuebersicht.pdf build/KARTEN.md "build/REGELN-${GITHUB_REF_NAME}.md" \
+            --title "Zum Goldenen Merge ${GITHUB_REF_NAME}" --generate-notes

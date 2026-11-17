@@ -1,0 +1,12 @@
+id: selchkammer
+name: Selchkammer
+typ: ausbau
+region: alle
+kosten: 3
+ruf: 1
+endwertung:
+  tag: speise
+  je: 2
+  ruf: 1
+flavor: Riecht nach Wochenende.
+autor: wirt

@@ -1,0 +1,8 @@
+id: feuerwehrfest
+name: Feuerwehrfest
+typ: anlass
+region: alle
+fuer_alle:
+- arbeit: 1
+flavor: Alle helfen mit – auch beim Aufbau.
+autor: wirt

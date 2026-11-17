@@ -1,0 +1,22 @@
+# Erzeugte Dateien (PDFs, Galerie, Berichte entstehen in CI und Releases)
+build/
+bericht.md
+pr-nummer.txt
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Editoren und Betriebssysteme
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Lokale Geheimnisse nie einchecken
+.env

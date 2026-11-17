@@ -1,0 +1,10 @@
+id: bauernstube
+name: Bauernstube
+typ: ausbau
+kosten: 4
+region: niederoesterreich
+ruf: 2
+beim_bau:
+- nehmen: 5
+flavor: Herrgottswinkel inklusive.
+autor: wirt

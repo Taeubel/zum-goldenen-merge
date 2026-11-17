@@ -1,0 +1,12 @@
+id: schankbursch
+name: Schankbursch
+typ: markt
+kosten: 4
+region: alle
+tags:
+- personal
+effekte:
+- geld: 2
+- arbeit: 1
+flavor: Zapft schneller, als du bestellen kannst.
+autor: wirt

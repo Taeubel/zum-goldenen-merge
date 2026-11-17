@@ -1,0 +1,10 @@
+id: seeterrasse
+name: Seeterrasse
+typ: ausbau
+region: kaernten
+kosten: 6
+ruf: 4
+jede_runde:
+- geld: 1
+flavor: Wörthersee-Blick inklusive.
+autor: wirt

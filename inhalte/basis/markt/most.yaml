@@ -1,0 +1,17 @@
+id: most
+name: Most
+typ: markt
+kosten: 2
+region: oberoesterreich
+tags:
+- getraenk
+effekte:
+- geld: 2
+kombo:
+  tag: gast
+  mindestens: 1
+  effekte:
+  - ruf: 1
+  - geld: 1
+flavor: Birne oder Apfel? Beides.
+autor: wirt

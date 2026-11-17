@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Taeubel/zum-goldenen-merge/schema/karte.schema.json",
+  "title": "Karte – Zum Goldenen Merge",
+  "type": "object",
+  "required": ["id", "name", "typ", "region", "autor"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Eindeutig, entspricht dem Dateinamen"},
+    "name": {"type": "string", "minLength": 2, "maxLength": 28},
+    "typ": {"enum": ["start", "markt", "ausbau", "anlass"]},
+    "kosten": {"type": "integer", "minimum": 0, "maximum": 10},
+    "anzahl": {"type": "integer", "minimum": 1, "maximum": 10},
+    "region": {"enum": ["alle", "wien", "niederoesterreich", "oberoesterreich", "salzburg", "tirol",
+                         "vorarlberg", "kaernten", "steiermark", "burgenland"]},
+    "tags": {"type": "array", "items": {"enum": ["geld", "personal", "gast", "speise", "getraenk"]}, "uniqueItems": true},
+    "ruf": {"type": "integer", "minimum": 0, "maximum": 10},
+    "effekte": {"$ref": "#/$defs/effektliste"},
+    "kombo": {
+      "type": "object",
+      "required": ["tag", "mindestens", "effekte"],
+      "additionalProperties": false,
+      "properties": {
+        "tag": {"enum": ["geld", "personal", "gast", "speise", "getraenk"]},
+        "mindestens": {"type": "integer", "minimum": 1, "maximum": 4},
+        "effekte": {"$ref": "#/$defs/effektliste"}
+      }
+    },
+    "jede_runde": {"$ref": "#/$defs/effektliste"},
+    "beim_bau": {"$ref": "#/$defs/effektliste"},
+    "endwertung": {
+      "type": "object",
+      "required": ["tag", "je", "ruf"],
+      "additionalProperties": false,
+      "properties": {
+        "tag": {"enum": ["geld", "personal", "gast", "speise", "getraenk"]},
+        "je": {"type": "integer", "minimum": 1},
+        "ruf": {"type": "integer", "minimum": 1}
+      }
+    },
+    "fuer_alle": {"$ref": "#/$defs/effektliste"},
+    "tag_bonus": {
+      "type": "object",
+      "required": ["tag", "effekte"],
+      "additionalProperties": false,
+      "properties": {
+        "tag": {"enum": ["geld", "personal", "gast", "speise", "getraenk"]},
+        "effekte": {"$ref": "#/$defs/effektliste"}
+      }
+    },
+    "ablegen": {"type": "integer", "minimum": 1, "maximum": 2},
+    "fuehrender_ablegen": {"type": "integer", "minimum": 1, "maximum": 2},
+    "bau_rabatt": {"type": "integer", "minimum": 1, "maximum": 3},
+    "kein_bau": {"type": "boolean"},
+    "flavor": {"type": "string", "maxLength": 90},
+    "autor": {"type": "string", "pattern": "^[A-Za-z0-9-]+$", "description": "GitHub-Benutzername"},
+    "illustration": {"type": "string", "pattern": "^grafik/.+\\.(svg|png)$"},
+    "text_en": {"type": "object", "properties": {"name": {"type": "string"}, "flavor": {"type": "string"}}}
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {"if": {"properties": {"typ": {"const": "markt"}}}, "then": {"required": ["kosten", "tags", "effekte"]}},
+    {"if": {"properties": {"typ": {"const": "start"}}}, "then": {"required": ["anzahl", "effekte"]}},
+    {"if": {"properties": {"typ": {"const": "ausbau"}}}, "then": {"required": ["kosten", "ruf"]}}
+  ],
+  "$defs": {
+    "effektliste": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "minProperties": 1,
+        "maxProperties": 1,
+        "description": "Genau eine Mechanik pro Eintrag, z. B. {geld: 2}. Gültige Namen: engine/effekte.py"
+      }
+    }
+  }
+}

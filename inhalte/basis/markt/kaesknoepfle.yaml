@@ -1,0 +1,17 @@
+id: kaesknoepfle
+name: Käsknöpfle
+typ: markt
+kosten: 5
+region: vorarlberg
+tags:
+- speise
+effekte:
+- geld: 1
+- arbeit: 2
+kombo:
+  tag: speise
+  mindestens: 1
+  effekte:
+  - ruf: 1
+flavor: Mit Röstzwiebeln. Viel Röstzwiebeln.
+autor: wirt

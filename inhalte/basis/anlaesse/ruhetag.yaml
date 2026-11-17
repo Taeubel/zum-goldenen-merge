@@ -1,0 +1,9 @@
+id: ruhetag
+name: Ruhetag
+typ: anlass
+region: alle
+kein_bau: true
+fuer_alle:
+- ziehen: 1
+flavor: Heute wird nix gebaut. Aber geplant.
+autor: wirt

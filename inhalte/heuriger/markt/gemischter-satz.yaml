@@ -1,0 +1,12 @@
+id: gemischter-satz
+name: Wiener Gemischter Satz
+typ: markt
+kosten: 3
+region: wien
+tags:
+- getraenk
+effekte:
+- geld: 1
+- ziehen: 1
+flavor: Mehrere Rebsorten, ein Weingarten.
+autor: wirt

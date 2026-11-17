@@ -1,0 +1,9 @@
+# Einheitliche Zeilenenden (wichtig, wenn unter Windows und macOS/Linux gearbeitet wird)
+* text=auto eol=lf
+
+# Binärdateien nie verändern
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.zip  binary

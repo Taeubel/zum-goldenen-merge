@@ -1,0 +1,8 @@
+id: hochzeit
+name: Hochzeit im Saal
+typ: anlass
+region: alle
+fuer_alle:
+- kaufen: 1
+flavor: Die Torte hat fünf Stöcke.
+autor: wirt

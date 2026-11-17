@@ -1,0 +1,10 @@
+id: kegelbahn
+name: Kegelbahn
+typ: ausbau
+region: alle
+kosten: 4
+ruf: 2
+jede_runde:
+- ziehen: 1
+flavor: Alle Neune!
+autor: wirt

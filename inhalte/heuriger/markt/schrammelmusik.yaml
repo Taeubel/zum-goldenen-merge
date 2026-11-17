@@ -1,0 +1,14 @@
+id: schrammelmusik
+name: Schrammelmusik
+typ: markt
+kosten: 5
+region: wien
+tags:
+- gast
+effekte:
+- je_tag:
+    tag: getraenk
+    effekte:
+    - ruf: 1
+flavor: Zwei Geigen, Gitarre, Knöpferlharmonika.
+autor: wirt

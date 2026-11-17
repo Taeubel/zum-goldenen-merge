@@ -1,0 +1,16 @@
+id: wiener-schnitzel
+name: Wiener Schnitzel
+typ: markt
+kosten: 4
+region: wien
+tags:
+- speise
+effekte:
+- geld: 2
+kombo:
+  tag: personal
+  mindestens: 1
+  effekte:
+  - ruf: 1
+flavor: Kalb, nicht Schwein. Darüber wird nicht verhandelt.
+autor: wirt

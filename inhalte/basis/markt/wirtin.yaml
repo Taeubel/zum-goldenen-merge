@@ -1,0 +1,14 @@
+id: wirtin
+name: Wirtin
+typ: markt
+kosten: 5
+region: alle
+tags:
+- personal
+effekte:
+- geld: 1
+- arbeit: 1
+- ziehen: 1
+- kaufen: 1
+flavor: Hat das Haus im Griff – und die Gäste auch.
+autor: wirt

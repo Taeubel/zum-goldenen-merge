@@ -1,0 +1,9 @@
+title: "[Idee] "
+labels: [help wanted]
+body:
+  - type: textarea
+    id: idee
+    attributes:
+      label: Deine Idee
+      description: Karte, Erweiterung, Thema, Bundesland-Paket – alles willkommen. Noch nicht fertig durchdacht? Passt!
+    validations: {required: true}

@@ -1,0 +1,17 @@
+id: stammgast
+name: Stammgast
+typ: markt
+kosten: 2
+region: alle
+tags:
+- gast
+effekte:
+- geld: 2
+kombo:
+  tag: getraenk
+  mindestens: 1
+  effekte:
+  - ruf: 1
+  - geld: 1
+flavor: Sitzt da seit 1987. Selber Platz.
+autor: wirt

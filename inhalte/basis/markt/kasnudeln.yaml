@@ -1,0 +1,17 @@
+id: kasnudeln
+name: Kärntner Kasnudeln
+typ: markt
+kosten: 5
+region: kaernten
+tags:
+- speise
+effekte:
+- geld: 1
+- ziehen: 1
+kombo:
+  tag: speise
+  mindestens: 1
+  effekte:
+  - ruf: 1
+flavor: Wer nicht krendeln kann, kriegt keine.
+autor: wirt

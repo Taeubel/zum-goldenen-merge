@@ -1,0 +1,14 @@
+id: heurigenwirt
+name: Heurigenwirt
+typ: markt
+kosten: 4
+region: wien
+tags:
+- personal
+effekte:
+- je_tag:
+    tag: getraenk
+    effekte:
+    - geld: 1
+flavor: Ausg'steckt is'!
+autor: wirt

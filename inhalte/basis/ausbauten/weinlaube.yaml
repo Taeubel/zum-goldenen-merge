@@ -1,0 +1,12 @@
+id: weinlaube
+name: Weinlaube
+typ: ausbau
+kosten: 3
+region: burgenland
+ruf: 1
+endwertung:
+  tag: getraenk
+  je: 3
+  ruf: 2
+flavor: Schatten für den Uhudler.
+autor: wirt

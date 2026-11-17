@@ -1,0 +1,12 @@
+id: buergermeister
+name: Bürgermeister
+typ: markt
+kosten: 6
+region: alle
+tags:
+- gast
+effekte:
+- geld: 2
+- ruf: 1
+flavor: Reserviert immer den Ecktisch.
+autor: wirt

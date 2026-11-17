@@ -1,0 +1,10 @@
+id: heuriger
+name: Beim Heurigen
+version: 0.1.0
+status: experimentell
+beschreibung: 'Beispiel-Erweiterung: führt die Mechanik „je_tag“ ein (skaliert mit gespielten Karten eines
+  Tags).'
+benoetigt:
+- basis
+mechaniken:
+- je_tag

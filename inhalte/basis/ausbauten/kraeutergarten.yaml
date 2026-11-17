@@ -1,0 +1,10 @@
+id: kraeutergarten
+name: Kräutergarten
+typ: ausbau
+kosten: 2
+region: steiermark
+ruf: 0
+jede_runde:
+- geld: 1
+flavor: Liebstöckl, Schnittlauch, Petersil.
+autor: wirt

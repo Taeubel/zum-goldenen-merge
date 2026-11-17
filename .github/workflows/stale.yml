@@ -1,0 +1,27 @@
+# Erinnert an liegengebliebene Vorschläge, schließt aber nichts automatisch,
+# was das Label "angenommen" oder "rfc" trägt.
+name: Aufräumen
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 45
+          days-before-close: 14
+          exempt-issue-labels: "angenommen,rfc,good first issue"
+          exempt-pr-labels: "angenommen,rfc"
+          stale-issue-message: "Hier war 45 Tage Ruhe. Ist das noch aktuell? Sonst schließen wir es in 2 Wochen – wiedereröffnen geht jederzeit."
+          stale-pr-message: "Dieser PR wartet seit 45 Tagen. Brauchst du Hilfe? Schreib einfach einen Kommentar."
+          stale-issue-label: eingeschlafen
+          stale-pr-label: eingeschlafen

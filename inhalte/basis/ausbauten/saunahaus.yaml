@@ -1,0 +1,10 @@
+id: saunahaus
+name: Saunahaus
+typ: ausbau
+kosten: 5
+region: salzburg
+ruf: 3
+jede_runde:
+- arbeit: 1
+flavor: Aufguss um 19 Uhr.
+autor: wirt

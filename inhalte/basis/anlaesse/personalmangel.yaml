@@ -1,0 +1,10 @@
+id: personalmangel
+name: Personalmangel
+typ: anlass
+region: alle
+tag_bonus:
+  tag: personal
+  effekte:
+  - arbeit: 1
+flavor: Wer Personal hat, ist König.
+autor: wirt

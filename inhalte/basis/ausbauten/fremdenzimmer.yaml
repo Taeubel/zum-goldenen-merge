@@ -1,0 +1,10 @@
+id: fremdenzimmer
+name: Fremdenzimmer
+typ: ausbau
+region: alle
+kosten: 5
+ruf: 3
+jede_runde:
+- geld: 1
+flavor: Mit Blick auf den See (bei gutem Wetter).
+autor: wirt

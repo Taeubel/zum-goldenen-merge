@@ -1,0 +1,14 @@
+# Wer muss welche Änderungen freigeben? (GitHub fordert Reviews automatisch an)
+# Später können Inhalte an ein Team (z. B. @Taeubel/stammtisch) oder an Bundesland-Pat:innen delegiert werden.
+
+*                     @Taeubel
+
+# Kernregeln, Engine und Spielparameter: nur der Wirt (Projektleitung)
+/REGELN.md            @Taeubel
+/engine/              @Taeubel
+/schema/              @Taeubel
+/GOVERNANCE.md        @Taeubel
+/.github/             @Taeubel
+
+# Inhalte: später an den Stammtisch (Maintainer-Team) delegieren
+/inhalte/             @Taeubel

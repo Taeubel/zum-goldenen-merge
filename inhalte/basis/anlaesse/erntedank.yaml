@@ -1,0 +1,10 @@
+id: erntedank
+name: Erntedank
+typ: anlass
+region: alle
+tag_bonus:
+  tag: speise
+  effekte:
+  - geld: 1
+flavor: Krone aus Ähren, Tisch voller Speisen.
+autor: wirt

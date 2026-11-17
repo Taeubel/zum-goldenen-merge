@@ -1,0 +1,16 @@
+id: liptauer
+name: Liptauerbrot
+typ: markt
+kosten: 2
+region: wien
+tags:
+- speise
+effekte:
+- geld: 1
+kombo:
+  tag: getraenk
+  mindestens: 1
+  effekte:
+  - arbeit: 1
+flavor: Gehört zum Achterl wie der Föhrenbuschen zur Tür.
+autor: wirt

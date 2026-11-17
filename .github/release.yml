@@ -1,0 +1,20 @@
+# Kategorien für automatisch erzeugte Release Notes ("Was gibt's Neues im Wirtshaus?")
+changelog:
+  exclude:
+    labels: [ci, eingeschlafen]
+    authors: [dependabot]
+  categories:
+    - title: 🃏 Neue Karten
+      labels: [karte, ausbau, anlass]
+    - title: 📦 Erweiterungen
+      labels: [erweiterung]
+    - title: ⚙️ Regeln & Mechaniken
+      labels: [regel, mechanik, rfc]
+    - title: ⚖️ Balance
+      labels: [balance]
+    - title: 🎨 Grafik
+      labels: [grafik]
+    - title: 🛠️ Engine & Werkzeuge
+      labels: [engine, bug]
+    - title: Sonstiges
+      labels: ["*"]

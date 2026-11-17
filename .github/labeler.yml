@@ -1,0 +1,34 @@
+# Konfiguration für actions/labeler@v5: Label <- geänderte Pfade
+karte:
+  - changed-files:
+      - any-glob-to-any-file: "inhalte/*/markt/**"
+ausbau:
+  - changed-files:
+      - any-glob-to-any-file: "inhalte/*/ausbauten/**"
+anlass:
+  - changed-files:
+      - any-glob-to-any-file: "inhalte/*/anlaesse/**"
+erweiterung:
+  - changed-files:
+      - any-glob-to-any-file: "inhalte/*/paket.yaml"
+regel:
+  - changed-files:
+      - any-glob-to-any-file: "REGELN.md"
+engine:
+  - changed-files:
+      - any-glob-to-any-file: ["engine/**", "tools/**", "tests/**"]
+mechanik:
+  - changed-files:
+      - any-glob-to-any-file: "engine/effekte.py"
+rfc:
+  - changed-files:
+      - any-glob-to-any-file: "docs/rfcs/**"
+grafik:
+  - changed-files:
+      - any-glob-to-any-file: "grafik/**"
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"
+doku:
+  - changed-files:
+      - any-glob-to-any-file: ["*.md", "docs/**"]

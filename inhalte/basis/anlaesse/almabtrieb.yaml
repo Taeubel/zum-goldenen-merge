@@ -1,0 +1,8 @@
+id: almabtrieb
+name: Almabtrieb
+typ: anlass
+region: alle
+fuer_alle:
+- ruf: 1
+flavor: Die Kühe kommen geschmückt ins Tal.
+autor: wirt

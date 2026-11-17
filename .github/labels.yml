@@ -1,0 +1,30 @@
+# Quelle der Wahrheit für alle Labels (wird per Workflow synchronisiert)
+- {name: karte, color: "b5121b", description: "Neue oder geänderte Marktkarte"}
+- {name: ausbau, color: "2f6b3a", description: "Ausbau-Karte"}
+- {name: anlass, color: "c7922b", description: "Anlass-Karte"}
+- {name: erweiterung, color: "6f42c1", description: "Neues Paket / neue Erweiterung"}
+- {name: mechanik, color: "5319e7", description: "Neuer Regelbaustein (braucht RFC)"}
+- {name: regel, color: "0e1a40", description: "Änderung an REGELN.md"}
+- {name: rfc, color: "000000", description: "Request for Comments – größere Designentscheidung"}
+- {name: balance, color: "fbca04", description: "Kosten/Stärke einer Karte"}
+- {name: spieltest, color: "0e8a16", description: "Bericht aus einer echten Partie"}
+- {name: braucht-spieltest, color: "c2e0c6", description: "Vor dem Merge am Tisch testen"}
+- {name: grafik, color: "f9d0c4", description: "Illustrationen, Layout, Druck"}
+- {name: engine, color: "1d76db", description: "Simulator / Python-Code"}
+- {name: ci, color: "bfdadc", description: "GitHub Actions, Automatisierung"}
+- {name: doku, color: "0075ca", description: "Dokumentation"}
+- {name: bug, color: "d73a4a", description: "Etwas funktioniert nicht wie beschrieben"}
+- {name: good first issue, color: "7057ff", description: "Ideal für den ersten Beitrag"}
+- {name: help wanted, color: "008672", description: "Hilfe willkommen"}
+- {name: angenommen, color: "0e8a16", description: "Idee ist angenommen, Umsetzung willkommen"}
+- {name: abgelehnt, color: "e4e669", description: "Passt nicht zu den Design-Säulen"}
+- {name: eingeschlafen, color: "eeeeee", description: "Länger keine Aktivität"}
+- {name: "region: wien", color: "ed1c24", description: ""}
+- {name: "region: niederösterreich", color: "0060a8", description: ""}
+- {name: "region: oberösterreich", color: "ffffff", description: ""}
+- {name: "region: salzburg", color: "e30613", description: ""}
+- {name: "region: tirol", color: "e2001a", description: ""}
+- {name: "region: vorarlberg", color: "d50000", description: ""}
+- {name: "region: kärnten", color: "ffd700", description: ""}
+- {name: "region: steiermark", color: "00a650", description: ""}
+- {name: "region: burgenland", color: "c8102e", description: ""}

@@ -1,0 +1,16 @@
+id: sommerfrischler
+name: Sommerfrischler
+typ: markt
+kosten: 5
+region: salzburg
+tags:
+- gast
+effekte:
+- geld: 3
+kombo:
+  tag: speise
+  mindestens: 1
+  effekte:
+  - ruf: 1
+flavor: Kommt jedes Jahr. Seit drei Generationen.
+autor: wirt

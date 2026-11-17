@@ -1,0 +1,20 @@
+name: 🐞 Fehler
+description: Regel unklar, Karte falsch gedruckt, Werkzeug kaputt …
+title: '[Fehler] '
+labels:
+- bug
+body:
+- type: textarea
+  id: was
+  attributes:
+    label: Was ist passiert / was ist unklar?
+  validations:
+    required: true
+- type: textarea
+  id: erwartet
+  attributes:
+    label: Was hättest du erwartet?
+- type: input
+  id: wo
+  attributes:
+    label: Wo? (Datei, Karte, Regel-Abschnitt)

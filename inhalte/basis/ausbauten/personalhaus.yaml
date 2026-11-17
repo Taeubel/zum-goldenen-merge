@@ -1,0 +1,12 @@
+id: personalhaus
+name: Personalhaus
+typ: ausbau
+region: alle
+kosten: 3
+ruf: 1
+endwertung:
+  tag: personal
+  je: 2
+  ruf: 1
+flavor: Wer hier wohnt, kommt pünktlich.
+autor: wirt

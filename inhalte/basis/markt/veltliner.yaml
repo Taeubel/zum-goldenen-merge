@@ -1,0 +1,17 @@
+id: veltliner
+name: Grüner Veltliner
+typ: markt
+kosten: 3
+region: niederoesterreich
+tags:
+- getraenk
+effekte:
+- geld: 1
+- arbeit: 1
+kombo:
+  tag: speise
+  mindestens: 1
+  effekte:
+  - ruf: 1
+flavor: A Achterl geht immer.
+autor: wirt

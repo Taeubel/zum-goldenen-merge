@@ -1,0 +1,16 @@
+id: koch
+name: Koch
+typ: markt
+kosten: 5
+region: alle
+tags:
+- personal
+effekte:
+- arbeit: 2
+kombo:
+  tag: speise
+  mindestens: 1
+  effekte:
+  - geld: 1
+flavor: Ohne Speisen ist er nur ein Mann mit Mütze.
+autor: wirt

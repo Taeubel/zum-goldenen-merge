@@ -1,0 +1,10 @@
+id: ski-opening
+name: Ski-Opening
+typ: anlass
+region: alle
+tag_bonus:
+  tag: gast
+  effekte:
+  - geld: 1
+flavor: Die Saison ist eröffnet.
+autor: wirt

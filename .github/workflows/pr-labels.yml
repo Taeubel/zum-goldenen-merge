@@ -1,0 +1,39 @@
+# Setzt Labels nach geänderten Pfaden und begrüßt Erst-Beitragende.
+# pull_request_target ist hier sicher, weil KEIN Code aus dem PR ausgecheckt wird.
+name: PR-Labels
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  labeln:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          sync-labels: false
+      - name: Erst-Beitragende begrüßen
+        if: github.event.action == 'opened' && contains(fromJSON('["FIRST_TIME_CONTRIBUTOR","FIRST_TIMER"]'), github.event.pull_request.author_association)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
+              body: [
+                'Servus und herzlich willkommen am Stammtisch! 🍺',
+                '',
+                'Danke für deinen ersten Beitrag zu **Zum Goldenen Merge**. Was jetzt passiert:',
+                '1. Die CI prüft deine Karte automatisch (Format, Regeln, Kosten).',
+                '2. Ein Bot spielt einige tausend Partien und postet hier einen **Balance-Bericht**.',
+                '3. Jemand aus dem Stammtisch-Team schaut sich das an – meist innerhalb einer Woche.',
+                '',
+                'Wenn etwas rot ist: keine Sorge, die Fehlermeldung sagt dir genau, was zu tun ist.',
+                'Wird dein Beitrag gemergt, steht dein Name auf der Karte. Prost!'
+              ].join('\n')
+            });

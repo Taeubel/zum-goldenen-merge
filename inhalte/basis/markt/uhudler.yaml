@@ -1,0 +1,17 @@
+id: uhudler
+name: Uhudler
+typ: markt
+kosten: 5
+region: burgenland
+tags:
+- getraenk
+effekte:
+- geld: 1
+- ziehen: 1
+kombo:
+  tag: getraenk
+  mindestens: 1
+  effekte:
+  - ruf: 1
+flavor: Schmeckt nach Walderdbeere. Wirklich.
+autor: wirt

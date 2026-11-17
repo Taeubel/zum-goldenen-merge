@@ -1,0 +1,13 @@
+id: abwascher
+name: Abwascher
+typ: markt
+kosten: 2
+region: alle
+tags:
+- personal
+effekte:
+- entsorgen: 1
+- geld: 1
+- arbeit: 1
+flavor: Was weg ist, ist weg.
+autor: wirt

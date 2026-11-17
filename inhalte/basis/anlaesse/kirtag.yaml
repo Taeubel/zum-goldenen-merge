@@ -1,0 +1,10 @@
+id: kirtag
+name: Kirtag
+typ: anlass
+region: alle
+tag_bonus:
+  tag: getraenk
+  effekte:
+  - geld: 1
+flavor: Ringelspiel, Lebkuchenherz, Bierzelt.
+autor: wirt

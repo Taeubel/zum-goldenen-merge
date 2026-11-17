@@ -1,0 +1,13 @@
+id: melange
+name: Melange
+typ: markt
+kosten: 2
+region: wien
+tags:
+- getraenk
+effekte:
+- ziehen: 1
+- kaufen: 1
+- geld: 1
+flavor: Mit Glas Wasser, versteht sich.
+autor: wirt

@@ -1,0 +1,12 @@
+id: kasnocken
+name: Pinzgauer Kasnocken
+typ: markt
+kosten: 3
+region: salzburg
+tags:
+- speise
+effekte:
+- geld: 1
+- arbeit: 1
+flavor: In der Pfann' serviert, mit Schnittlauch.
+autor: wirt

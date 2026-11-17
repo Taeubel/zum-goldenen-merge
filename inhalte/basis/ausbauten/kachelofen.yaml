@@ -1,0 +1,10 @@
+id: kachelofen
+name: Kachelofen
+typ: ausbau
+region: alle
+kosten: 2
+ruf: 1
+beim_bau:
+- nehmen: 4
+flavor: Der beste Platz im Winter.
+autor: wirt

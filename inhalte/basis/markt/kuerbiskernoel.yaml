@@ -1,0 +1,17 @@
+id: kuerbiskernoel
+name: Kürbiskernöl
+typ: markt
+kosten: 2
+region: steiermark
+tags:
+- speise
+effekte:
+- geld: 1
+kombo:
+  tag: speise
+  mindestens: 1
+  effekte:
+  - ruf: 1
+  - geld: 1
+flavor: Das schwarze Gold der Steiermark.
+autor: wirt

@@ -1,0 +1,52 @@
+name: 🎲 Spieltest-Bericht
+description: Ihr habt eine Partie gespielt? Erzählt, wie es war!
+title: '[Spieltest] '
+labels:
+- spieltest
+body:
+- type: input
+  id: version
+  attributes:
+    label: Version / Commit
+    placeholder: v0.1.0 oder Link zum PR
+  validations:
+    required: true
+- type: dropdown
+  id: personen
+  attributes:
+    label: Anzahl Personen
+    options:
+    - '2'
+    - '3'
+    - '4'
+  validations:
+    required: true
+- type: input
+  id: markt
+  attributes:
+    label: Welche 10 Marktkarten lagen aus?
+- type: input
+  id: dauer
+  attributes:
+    label: Spieldauer (Minuten) und Rundenzahl
+- type: textarea
+  id: ergebnis
+  attributes:
+    label: Endstand
+    placeholder: Anna 31, Ben 27
+- type: textarea
+  id: eindruck
+  attributes:
+    label: Was war zu stark, zu schwach, unklar, besonders lustig?
+  validations:
+    required: true
+- type: dropdown
+  id: spass
+  attributes:
+    label: Spaß-Faktor
+    options:
+    - 5 – Nochmal!
+    - '4'
+    - '3'
+    - '2'
+    - 1 – Eher nicht

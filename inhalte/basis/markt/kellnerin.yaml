@@ -1,0 +1,11 @@
+id: kellnerin
+name: Kellnerin
+typ: markt
+kosten: 5
+region: alle
+tags:
+- personal
+effekte:
+- ziehen: 2
+flavor: Zwei Teller links, drei rechts.
+autor: wirt

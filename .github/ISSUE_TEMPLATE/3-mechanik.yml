@@ -1,0 +1,39 @@
+name: ⚙️ Neue Mechanik / Regeländerung (RFC)
+description: Größere Änderungen am Regelwerk – werden öffentlich diskutiert, bevor jemand programmiert.
+title: '[RFC] '
+labels:
+- rfc
+body:
+- type: markdown
+  attributes:
+    value: 'Neue Mechaniken verändern das Spiel für alle. Deshalb gilt: erst diskutieren, dann bauen.
+
+      Ablauf und Entscheidungsregeln stehen in GOVERNANCE.md.
+
+      '
+- type: textarea
+  id: problem
+  attributes:
+    label: Welches Problem löst die Mechanik?
+  validations:
+    required: true
+- type: textarea
+  id: vorschlag
+  attributes:
+    label: Regeltext-Vorschlag (so, wie er in REGELN.md stehen würde)
+  validations:
+    required: true
+- type: textarea
+  id: beispiele
+  attributes:
+    label: 2–3 Beispielkarten, die die Mechanik nutzen
+- type: dropdown
+  id: saeulen
+  attributes:
+    label: Passt zu den Design-Säulen?
+    options:
+    - Leicht erklärbar
+    - Österreich mit Augenzwinkern
+    - Modular statt kompliziert
+    - Simulierbar
+    multiple: true

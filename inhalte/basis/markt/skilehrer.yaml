@@ -1,0 +1,17 @@
+id: skilehrer
+name: Skilehrer
+typ: markt
+kosten: 4
+region: vorarlberg
+tags:
+- gast
+effekte:
+- geld: 1
+- ziehen: 1
+kombo:
+  tag: getraenk
+  mindestens: 1
+  effekte:
+  - ruf: 1
+flavor: Après-Ski ist auch Unterricht.
+autor: wirt

@@ -1,0 +1,8 @@
+id: lebensmittelkontrolle
+name: Lebensmittelkontrolle
+typ: anlass
+region: alle
+fuer_alle:
+- entsorgen: 1
+flavor: Der Kühlschrank wird ausgemistet.
+autor: wirt

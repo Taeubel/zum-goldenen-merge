@@ -1,0 +1,12 @@
+id: reisebus
+name: Reisebus
+typ: markt
+kosten: 4
+region: alle
+tags:
+- gast
+effekte:
+- geld: 3
+- kaufen: 1
+flavor: 40 Leute, 20 Minuten Pause.
+autor: wirt

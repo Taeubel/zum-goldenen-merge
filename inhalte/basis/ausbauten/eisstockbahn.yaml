@@ -1,0 +1,10 @@
+id: eisstockbahn
+name: Eisstockbahn
+typ: ausbau
+region: steiermark
+kosten: 4
+ruf: 3
+beim_bau:
+- ruf: 1
+flavor: Moar, Daube, Stock.
+autor: wirt

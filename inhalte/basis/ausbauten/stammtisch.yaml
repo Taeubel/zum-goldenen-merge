@@ -1,0 +1,12 @@
+id: stammtisch
+name: Stammtisch
+typ: ausbau
+region: alle
+kosten: 3
+ruf: 1
+endwertung:
+  tag: gast
+  je: 2
+  ruf: 1
+flavor: Reserviert. Immer.
+autor: wirt

@@ -1,0 +1,10 @@
+id: gastgarten
+name: Gastgarten
+typ: ausbau
+region: alle
+kosten: 3
+ruf: 1
+jede_runde:
+- geld: 1
+flavor: Unter der Kastanie.
+autor: wirt

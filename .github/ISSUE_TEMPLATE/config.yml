@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Ideen & lockeres Plaudern
+    url: https://github.com/Taeubel/zum-goldenen-merge/discussions
+    about: Noch keine fertige Idee? Erzähl's am Stammtisch (Discussions).
+  - name: 🃏 Alle Karten ansehen
+    url: https://Taeubel.github.io/zum-goldenen-merge/
+    about: Die Kartengalerie mit Filter nach Bundesland.

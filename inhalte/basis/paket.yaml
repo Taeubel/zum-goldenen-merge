@@ -1,0 +1,16 @@
+id: basis
+name: Grundspiel
+version: 0.1.0
+status: stabil
+beschreibung: 'Das Grundspiel: Wirtshausalltag quer durch alle neun Bundesländer.'
+benoetigt: []
+mechaniken:
+- geld
+- arbeit
+- ruf
+- ziehen
+- kaufen
+- entsorgen
+- nehmen
+- gegner_ablegen
+- kombo

@@ -1,0 +1,17 @@
+id: herr-ober
+name: Herr Ober
+typ: markt
+kosten: 5
+region: wien
+tags:
+- personal
+effekte:
+- geld: 2
+- ziehen: 1
+kombo:
+  tag: gast
+  mindestens: 1
+  effekte:
+  - ruf: 1
+flavor: „Bitte sehr, der Herr. Kommt sofort.“ (Kommt nicht sofort.)
+autor: wirt

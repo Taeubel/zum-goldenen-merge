@@ -1,0 +1,11 @@
+id: trinkgeld
+name: Trinkgeld
+typ: start
+anzahl: 7
+region: alle
+tags:
+- geld
+effekte:
+- geld: 1
+flavor: Passt scho'.
+autor: wirt

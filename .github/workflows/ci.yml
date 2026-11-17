@@ -1,0 +1,88 @@
+# Läuft bei jedem Pull Request und jedem Push auf main.
+# Sicherheit: Dieser Workflow hat NUR Leserechte. Der PR-Kommentar wird
+# in einem separaten Workflow (pr-kommentar.yml) ohne fremden Code gepostet.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruefen:
+    name: pruefen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Inhalte prüfen (Schema, IDs, Mechaniken, Kosten)
+        run: python tools/pruefen.py
+      - name: Regel- und Engine-Tests
+        run: python -m pytest -q
+
+  simulation:
+    name: simulation
+    needs: pruefen
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Balance-Simulation
+        env:
+          BASIS: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD~1' }}
+        run: |
+          python tools/simulieren.py --partien 2000 --geaendert "$BASIS" --markdown bericht.md
+          cat bericht.md >> "$GITHUB_STEP_SUMMARY"
+      - name: PR-Nummer für den Kommentar-Workflow merken
+        if: github.event_name == 'pull_request'
+        run: echo "${{ github.event.pull_request.number }}" > pr-nummer.txt
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: simulationsbericht
+          path: |
+            bericht.md
+            pr-nummer.txt
+          retention-days: 7
+
+  karten:
+    name: karten
+    needs: pruefen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python tools/karten_bauen.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: karten-vorschau
+          path: |
+            build/kartenuebersicht.pdf
+            build/site/index.html
+            build/KARTEN.md
+          retention-days: 14

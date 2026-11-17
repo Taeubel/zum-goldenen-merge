@@ -1,0 +1,12 @@
+id: weinkeller
+name: Weinkeller
+typ: ausbau
+region: alle
+kosten: 4
+ruf: 2
+endwertung:
+  tag: getraenk
+  je: 2
+  ruf: 1
+flavor: Kühl, dunkel, voll.
+autor: wirt

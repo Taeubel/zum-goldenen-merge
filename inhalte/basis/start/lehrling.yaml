@@ -1,0 +1,11 @@
+id: lehrling
+name: Lehrling
+typ: start
+anzahl: 3
+region: alle
+tags:
+- personal
+effekte:
+- arbeit: 1
+flavor: Erstes Lehrjahr, aber motiviert.
+autor: wirt

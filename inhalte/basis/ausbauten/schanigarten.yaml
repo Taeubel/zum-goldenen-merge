@@ -1,0 +1,10 @@
+id: schanigarten
+name: Schanigarten
+typ: ausbau
+region: wien
+kosten: 3
+ruf: 1
+jede_runde:
+- arbeit: 1
+flavor: Ab März, bei jedem Wetter.
+autor: wirt

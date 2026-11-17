@@ -1,0 +1,10 @@
+id: hofladen
+name: Hofladen
+typ: ausbau
+region: oberoesterreich
+kosten: 3
+ruf: 1
+beim_bau:
+- geld: 3
+flavor: Eier, Speck, Most – Kassa des Vertrauens.
+autor: wirt

@@ -1,0 +1,77 @@
+name: 🃏 Kartenidee
+description: Schlag eine neue Karte vor – auch ohne Programmierkenntnisse.
+title: '[Karte] '
+labels:
+- karte
+body:
+- type: markdown
+  attributes:
+    value: 'Super, dass du mitmachst! Beschreib deine Karte so gut es geht.
+
+      Jemand vom Stammtisch hilft dir beim Umsetzen – oder du machst gleich einen PR (siehe CONTRIBUTING.md).
+
+      '
+- type: input
+  id: name
+  attributes:
+    label: Name der Karte
+    placeholder: z. B. Kaiserschmarrn
+  validations:
+    required: true
+- type: dropdown
+  id: typ
+  attributes:
+    label: Art
+    options:
+    - Marktkarte (Personal, Gast, Speise, Getränk)
+    - Ausbau
+    - Anlass
+  validations:
+    required: true
+- type: dropdown
+  id: region
+  attributes:
+    label: Bundesland
+    options:
+    - ganz Österreich
+    - Wien
+    - Niederösterreich
+    - Oberösterreich
+    - Salzburg
+    - Tirol
+    - Vorarlberg
+    - Kärnten
+    - Steiermark
+    - Burgenland
+  validations:
+    required: true
+- type: textarea
+  id: wirkung
+  attributes:
+    label: Wirkung
+    description: Nutze möglichst die Bausteine aus REGELN.md (geld, arbeit, ruf, ziehen, kaufen, entsorgen, nehmen, kombo
+      …)
+    placeholder: '+2 Geld. Kombo – mind. 1 andere Speise-Karte: +1 Ruf.'
+  validations:
+    required: true
+- type: input
+  id: kosten
+  attributes:
+    label: Vorgeschlagene Kosten
+    placeholder: z. B. 4 Geld
+- type: input
+  id: flavor
+  attributes:
+    label: Spruch auf der Karte (optional, max. 90 Zeichen)
+    placeholder: „Mit Preiselbeeren, bitte.“
+- type: textarea
+  id: warum
+  attributes:
+    label: Warum macht die Karte das Spiel besser?
+- type: checkboxes
+  id: lizenz
+  attributes:
+    label: Lizenz
+    options:
+    - label: Die Idee ist von mir und darf unter CC BY-SA 4.0 ins Spiel.
+      required: true

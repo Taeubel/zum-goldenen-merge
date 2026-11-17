@@ -1,0 +1,12 @@
+id: huettenwirt
+name: Hüttenwirt
+typ: markt
+kosten: 4
+region: tirol
+tags:
+- personal
+effekte:
+- arbeit: 1
+- nehmen: 3
+flavor: Auf 2.000 Metern gibt's keinen Lieferdienst.
+autor: wirt
