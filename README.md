@@ -58,3 +58,7 @@ docs/                Balance, RFCs, Setup
 * Inhalte: **CC BY-SA 4.0**, Code: **MIT**
 
 *Entstanden aus einem Experiment: Was passiert, wenn man ein Brettspiel wie Open-Source-Software entwickelt?*
+
+## Wer steckt dahinter?
+
+Erfunden und betreut von **Philipp** ([@Taeubel](https://github.com/Taeubel)), dem „Wirt“ dieses Projekts. Fragen, Ideen oder Lust auf einen Spieleabend? Melde dich in den [Discussions](../../discussions) oder auf [LinkedIn](https://www.linkedin.com/in/philipp-t%C3%A4ubel/).
