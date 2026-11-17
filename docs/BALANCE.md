@@ -24,12 +24,14 @@ Der Bot postet in jeden PR einen **Balance-Bericht** mit Ampel. Ganz oben steht 
 | 🔴 | deutlich daneben: Änderung vermutlich anpassen |
 | ℹ️ | nur Information |
 
-**Gesamtspiel:** 2.000 Partien mit zwei „gierigen“ Bots.
+**Gesamtspiel:** je 2.000 Partien mit 2, 3 und 4 „gierigen“ Bots. Jede Spielerzahl bekommt eine eigene Spalte, das Gesamturteil ist die schlechteste Ampel über alle Spielerzahlen.
 
 | Kennzahl | 🟢 | 🟡 |
 |---|---|---|
-| Spieldauer (Ø Runden) | 10–20 | 8–22 |
+| Spieldauer (Ø Runden), 2 Personen | 10–20 | 8–22 |
+| Spieldauer (Ø Runden), 3–4 Personen | 9–20 | 7–22 |
 | Startspieler gewinnt (2 Personen) | 44–56 % | 40–60 % |
+| Größte Abweichung eines Sitzplatzes von fair (3–4 Personen) | ≤ 6 Pkt. | ≤ 10 Pkt. |
 | Festgefahrene Partien (Rundenlimit erreicht) | ≤ 1 % | ≤ 3 % |
 | Knappe Partien (≤ 3 Ruf Abstand) | nur Info | |
 
@@ -39,7 +41,15 @@ Der Bot postet in jeden PR einen **Balance-Bericht** mit Ampel. Ganz oben steht 
   * Zu jeder Quote steht die Messungenauigkeit (95 %), z. B. „48 % ± 4“.
   * Die Faustformel aus Abschnitt 1 wird danebengestellt. Widersprechen sich Simulation und Faustformel, sagt der Bericht das ausdrücklich.
 * **Vergleich „vorher“:** Der Bericht simuliert zusätzlich den Kartenstand vor dem PR (gleiche Engine, gleiche Zufallszahlen). So sieht man auch die Wirkung geänderter Ausbauten und Anlässe, die sich nicht im Duell testen lassen.
-* Lokal: `python tools/simulieren.py --geaendert origin/main` erzeugt denselben Bericht, `--ohne-vergleich` spart die Basis-Simulation.
+* **Stimmen vom Stammtisch** (`tools/stammtisch.py`): Fünf erfundene Figuren kommentieren das Ergebnis in ein paar Sätzen, jede mit eigenem Blickwinkel:
+  * 🍺 **Resi**, Wirtin: Spieldauer und Spannung in großer Runde
+  * 🧮 **Ferdl**, Optimierer: Wie stark sind die neuen Karten, lohnt sich der Preis?
+  * ⚖️ **Frau Magister Brandl**, Schiedsrichterin: Haben alle Sitzplätze gleiche Chancen?
+  * 🎲 **Lukas**, Neuling: Passt es insgesamt, und wird das Spiel komplizierter?
+  * 😤 **Der Grantler**: die größte Veränderung gegenüber vorher
+
+  Die Texte entstehen nach festen Regeln aus den Zahlen (keine KI, kein Zufall). Neue Figuren sind willkommen: Funktion schreiben und in `FIGUREN` eintragen.
+* Lokal: `python tools/simulieren.py --geaendert origin/main` erzeugt denselben Bericht. `--spieler 2` simuliert nur eine Spielerzahl, `--ohne-vergleich` spart die Basis-Simulation.
 
 ## Grenzen
 Die Bots sind einfach. Sie bluffen nicht, planen nicht über mehrere Züge und spielen Kombos nur zufällig gut. Karten, deren Stärke in cleveren Kombinationen liegt, werden oft **unterschätzt**. Darum gilt: Simulation = Frühwarnsystem, **Spieltest am Tisch = Entscheidung.**

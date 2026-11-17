@@ -2,12 +2,14 @@
 """Balance-Simulation ("Vibe-Gaming").
 
 Beispiele:
-  python tools/simulieren.py                       # Gesamtbericht Grundspiel
+  python tools/simulieren.py                       # Gesamtbericht für 2, 3 und 4 Spieler
+  python tools/simulieren.py --spieler 2           # nur 2 Spieler
   python tools/simulieren.py --karten koch,most    # Bericht für bestimmte Karten
   python tools/simulieren.py --geaendert origin/main --markdown bericht.md
 
 Mit --geaendert wird zusätzlich der Kartenstand der Git-Basis simuliert
 (gleiche Engine, gleiche Zufallszahlen). So zeigt der Bericht „vorher → nachher“.
+Die Stimmen vom Stammtisch (tools/stammtisch.py) werden aus diesen Zahlen abgeleitet.
 """
 from __future__ import annotations
 
@@ -28,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine.bots import BOTS, Fokus  # noqa: E402
 from engine.inhalte import alle_karten, lade_pakete  # noqa: E402
 from engine.spiel import PARAMETER, Spiel  # noqa: E402
+from tools import stammtisch  # noqa: E402
 
 try:  # Faustformel aus dem Prüfwerkzeug (optional)
     from tools.pruefen import kosten_erwartung  # noqa: E402
@@ -40,17 +43,12 @@ except Exception:  # pragma: no cover - z. B. wenn jsonschema fehlt
 GRENZEN = {
     "fokus_siegquote": (0.40, 0.60, 0.35, 0.65),        # Fokus-Bot vs. Gierig-Bot (2 Spieler)
     "startspieler_quote_2p": (0.44, 0.56, 0.40, 0.60),
-    "runden": (10, 20, 8, 22),
+    # Größte Abweichung einer Sitzposition von der fairen Quote (1/Spielerzahl)
+    "positions_abweichung": (0.0, 0.06, 0.0, 0.10),
+    "runden": (10, 20, 8, 22),                          # 2 Spieler
+    "runden_gross": (9, 20, 7, 22),                     # 3+ Spieler (Partien sind etwas kürzer)
     "limit_quote": (0.0, 0.01, 0.0, 0.03),              # Partien, die das Rundenlimit erreichen
 }
-
-def fokus_grenzen(spielerzahl=2):
-    """Zielband fürs Fokus-Duell: fair (1/Spielerzahl) ± 10 Pkt. grün, ± 15 Pkt. gelb."""
-    fair = 1 / spielerzahl
-    if spielerzahl == 2:
-        return GRENZEN["fokus_siegquote"]
-    return (fair - 0.10, fair + 0.10, fair - 0.15, fair + 0.15)
-
 
 GRUEN, GELB, ROT, INFO = "🟢", "🟡", "🔴", "ℹ️"
 RANG = {GRUEN: 0, INFO: 0, GELB: 1, ROT: 2}
@@ -60,6 +58,18 @@ ENDE_NAME = {
     "markt": f"{PARAMETER['leere_stapel_fuer_ende']} Marktstapel leer",
     "limit": f"Sicherheitslimit ({PARAMETER['max_runden']} Runden) erreicht",
 }
+
+
+def fokus_grenzen(spielerzahl=2):
+    """Zielband fürs Fokus-Duell: fair (1/Spielerzahl) ± 10 Pkt. grün, ± 15 Pkt. gelb."""
+    if spielerzahl == 2:
+        return GRENZEN["fokus_siegquote"]
+    fair = 1 / spielerzahl
+    return (fair - 0.10, fair + 0.10, fair - 0.15, fair + 0.15)
+
+
+def runden_grenzen(spielerzahl=2):
+    return GRENZEN["runden"] if spielerzahl <= 2 else GRENZEN["runden_gross"]
 
 
 # -- Simulation -------------------------------------------------------------------
@@ -100,8 +110,10 @@ def gesamtbericht(ergebnisse, spielerzahl, karten=None):
         for liste in e["gekauft"]:
             gekauft.update(k for k in liste if not karten or karten.get(k, {}).get("typ") == "markt")
     n = len(ergebnisse)
+    quoten = [sieg_pos[i] / n for i in range(spielerzahl)]
     return {
         "spiele": n,
+        "spieler": spielerzahl,
         "runden_mittel": statistics.mean(runden),
         "runden_min_max": (min(runden), max(runden)),
         "runden_p10_p90": (_perzentil(runden, 0.1), _perzentil(runden, 0.9)),
@@ -109,7 +121,8 @@ def gesamtbericht(ergebnisse, spielerzahl, karten=None):
         "sieger_punkte_mittel": statistics.mean(max(e["punkte"]) for e in ergebnisse),
         "abstand_mittel": statistics.mean(abstaende),
         "knapp_quote": sum(a <= 3 for a in abstaende) / n,
-        "siegquote_position": [sieg_pos[i] / n for i in range(spielerzahl)],
+        "siegquote_position": quoten,
+        "positions_abweichung": max(abs(q - 1 / spielerzahl) for q in quoten),
         "spielende": {k: v / n for k, v in enden.items()},
         "limit_quote": enden.get("limit", 0) / n,
         "meistgekauft": [(k, v / n) for k, v in gekauft.most_common(5)],
@@ -138,9 +151,32 @@ def kartenbericht(karten, kid, n=600, spielerzahl=2, seed=7):
         kaeufe += e["gekauft"][pos].count(kid)
     q = siege / n
     return {"karte": kid, "partien": n, "siegquote": q, "kaeufe": kaeufe / n,
-            "fair": 1 / spielerzahl,
+            "fair": 1 / spielerzahl, "spieler": spielerzahl,
             # 95-%-Unsicherheit der Siegquote (Normalnäherung)
             "unsicherheit": 1.96 * math.sqrt(max(q * (1 - q), 0.01) / n)}
+
+
+def auswerten(karten, markt_ziel, spielerzahlen, partien, seed, n_duell, basis_karten=None):
+    """Simuliert alle Spielerzahlen, optional auch den Kartenstand der Basis.
+
+    Ergebnis: {spielerzahl: {"gesamt", "karten", "basis", "basis_karten"}}
+    """
+    ergebnis = {}
+    for n in spielerzahlen:
+        r = {"gesamt": gesamtbericht(spiele(karten, partien, n, seed=seed), n, karten),
+             "karten": {kid: kartenbericht(karten, kid, n_duell, n, seed + 7) for kid in markt_ziel},
+             "basis": None, "basis_karten": {}}
+        if basis_karten is not None:
+            try:
+                r["basis"] = gesamtbericht(spiele(basis_karten, partien, n, seed=seed), n, basis_karten)
+                r["basis_karten"] = {kid: kartenbericht(basis_karten, kid, n_duell, n, seed + 7)
+                                     for kid in markt_ziel
+                                     if basis_karten.get(kid, {}).get("typ") == "markt"}
+            except Exception as e:  # noqa: BLE001 - z. B. alte Karten passen nicht zur neuen Engine
+                print(f"Hinweis: Basis-Simulation fehlgeschlagen ({e})", file=sys.stderr)
+                r["basis"], r["basis_karten"] = None, {}
+        ergebnis[n] = r
+    return ergebnis
 
 
 # -- Git ---------------------------------------------------------------------------
@@ -188,33 +224,36 @@ def tausend(n):
     return f"{n:,}".replace(",", ".")
 
 
-def veraenderung(jetzt, vorher, einheit="pp", schwelle=0.0):
-    """'+3 Pkt.' o. ä.; leer, wenn kein Vergleich. Prozentwerte als Anteil übergeben."""
-    if vorher is None:
-        return "–"
-    if einheit == "pp":
-        d = (jetzt - vorher) * 100
-        txt = f"{prozent(vorher)} ({d:+.0f} Pkt.)"
-    else:
-        d = jetzt - vorher
-        txt = f"{zahl(vorher)} ({d:+.1f})".replace(".", ",")
-    return txt if abs(d) > schwelle else f"{txt[:txt.index(' (')]} (gleich)"
-
-
 def karten_urteil(b, spielerzahl=2):
     q = b["siegquote"]
     g_lo, g_hi, y_lo, y_hi = fokus_grenzen(spielerzahl)
     von100 = round(q * 100)
+    fair = round(100 / spielerzahl)
     if g_lo <= q <= g_hi:
         return (GRUEN, f"Ausgewogen. Wer die Karte gezielt kauft, gewinnt {von100} von 100 Partien "
-                       f"(fair wären {round(100 / spielerzahl)}).")
+                       f"(fair wären {fair}).")
     if q > g_hi:
         stufe = "etwas zu stark" if q <= y_hi else "deutlich zu stark"
         return (GELB if q <= y_hi else ROT,
-                f"Vermutlich {stufe}: {von100} von 100 Siegen. Idee: Kosten erhöhen oder Effekt abschwächen.")
+                f"Vermutlich {stufe}: {von100} von 100 Siegen (fair wären {fair}). "
+                "Idee: Kosten erhöhen oder Effekt abschwächen.")
     stufe = "etwas zu schwach" if q >= y_lo else "deutlich zu schwach"
     return (GELB if q >= y_lo else ROT,
-            f"Vermutlich {stufe}: nur {von100} von 100 Siegen. Idee: Kosten senken oder Effekt verstärken.")
+            f"Vermutlich {stufe}: nur {von100} von 100 Siegen (fair wären {fair}). "
+            "Idee: Kosten senken oder Effekt verstärken.")
+
+
+def bewerte(ergebnis):
+    """Ampeln je Spielerzahl. Ergänzt ergebnis[n]["ampeln"]."""
+    for n, r in ergebnis.items():
+        g = r["gesamt"]
+        a = {"runden": ampel(g["runden_mittel"], runden_grenzen(n)),
+             "position": (ampel(g["siegquote_position"][0], GRENZEN["startspieler_quote_2p"]) if n == 2
+                          else ampel(g["positions_abweichung"], GRENZEN["positions_abweichung"])),
+             "limit": ampel(g["limit_quote"], GRENZEN["limit_quote"]),
+             "karten": {kid: karten_urteil(b, n) for kid, b in r["karten"].items()}}
+        r["ampeln"] = a
+    return ergebnis
 
 
 GESAMT_TEXT = {
@@ -229,124 +268,73 @@ GESAMT_TEXT = {
 }
 
 
+def schlimmste(lichter):
+    s = max(lichter, key=RANG.get, default=GRUEN)
+    return GRUEN if s == INFO else s
+
+
+def gesamtampel(ergebnis):
+    lichter = []
+    for r in ergebnis.values():
+        a = r["ampeln"]
+        lichter += [a["runden"], a["position"], a["limit"]] + [lt for lt, _ in a["karten"].values()]
+    return schlimmste(lichter)
+
+
 # -- Markdown ----------------------------------------------------------------------
 
-def markdown(gesamt, karten_berichte, karten, warnungen, *, spielerzahl=2, ziel=None,
-             basis=None, basis_name="", basis_karten=None, basis_berichte=None) -> str:
+def _vorher(jetzt_txt, vorher_txt, gleich):
+    if vorher_txt is None:
+        return jetzt_txt
+    return f"{jetzt_txt}<br><sub>vorher {'gleich' if gleich else vorher_txt}</sub>"
+
+
+def _positionen(g):
+    if g["spieler"] == 2:
+        return f"{prozent(g['siegquote_position'][0])} Startspieler"
+    return " / ".join(f"{q * 100:.0f}" for q in g["siegquote_position"]) + " %"
+
+
+def _kosten_text(c, b, n):
+    """Faustformel-Kommentar zur Karte und Faustformel-Preis (oder None)."""
+    if not (kosten_erwartung and c.get("effekte") and isinstance(c.get("kosten"), int)):
+        return "", None
+    try:
+        soll = kosten_erwartung(c)
+    except Exception:  # noqa: BLE001
+        return "", None
+    if abs(soll - c["kosten"]) <= 2:
+        return "", soll
+    guenstig = c["kosten"] < soll
+    richtung = "günstig" if guenstig else "teuer"
+    q, (g_lo, g_hi) = b["siegquote"], fokus_grenzen(n)[:2]
+    if g_lo <= q <= g_hi:
+        return (f" Die Faustformel hält den Preis für zu {richtung}, "
+                "in der Simulation fällt das aber nicht auf."), soll
+    if (q > g_hi) == guenstig:
+        return f" Die Faustformel sieht das auch so (Preis wirkt zu {richtung}).", soll
+    return (f" Die Faustformel hält den Preis dagegen für zu {richtung}. "
+            "Hier widersprechen sich beide, ein Spieltest klärt das am besten."), soll
+
+
+def markdown(ergebnis, karten, warnungen, *, ziel=None, basis_name="", basis_karten=None) -> str:
     ziel = ziel or []
-    basis_berichte = basis_berichte or {}
     basis_karten = basis_karten or {}
-    lichter = []
+    zahlen = sorted(ergebnis)
+    haupt = 2 if 2 in ergebnis else zahlen[0]
+    mit_basis = any(r["basis"] for r in ergebnis.values())
+    licht = gesamtampel(ergebnis)
+    titel, satz = GESAMT_TEXT[licht]
     todo = []
 
-    # Kennzahlen des Gesamtspiels
-    zeilen_gesamt = []
-    r = gesamt["runden_mittel"]
-    l_runden = ampel(r, GRENZEN["runden"])
-    lo, hi = GRENZEN["runden"][:2]
-    deutung = ("Partien dauern angenehm lang." if l_runden == GRUEN else
-               "Partien sind zu kurz, Aufbau lohnt sich kaum." if r < lo else
-               "Partien ziehen sich in die Länge.")
-    zeilen_gesamt.append((l_runden, "Spieldauer", f"Ø {zahl(r)} Runden",
-                          veraenderung(r, basis and basis["runden_mittel"], "abs", 0.2) if basis else "–",
-                          f"{lo}–{hi} Runden", deutung))
-    if l_runden != GRUEN:
-        todo.append(f"{l_runden} **Spieldauer:** Prüfen, ob die Änderung das Spielende zu früh oder zu spät auslöst.")
-
-    if spielerzahl == 2:
-        q = gesamt["siegquote_position"][0]
-        l = ampel(q, GRENZEN["startspieler_quote_2p"])
-        lo, hi = GRENZEN["startspieler_quote_2p"][:2]
-        deutung = ("Wer anfängt, hat keinen nennenswerten Vorteil." if l == GRUEN else
-                   "Wer anfängt, gewinnt zu oft." if q > hi else "Wer anfängt, verliert zu oft.")
-        zeilen_gesamt.append((l, "Fairness der Startposition", f"{prozent(q)} Siege für Startspieler",
-                              veraenderung(q, basis and basis["siegquote_position"][0], "pp", 1) if basis else "–",
-                              f"{prozent(lo)}–{prozent(hi)}", deutung))
-        if l != GRUEN:
-            todo.append(f"{l} **Startposition:** Die Änderung verschiebt den Vorteil des Startspielers.")
-    else:
-        q = " / ".join(prozent(x) for x in gesamt["siegquote_position"])
-        zeilen_gesamt.append((INFO, "Siege nach Startposition", q, "–", f"je ≈ {prozent(1 / spielerzahl)}",
-                              "Sollte ungefähr gleich verteilt sein."))
-
-    lq = gesamt["limit_quote"]
-    l = ampel(lq, GRENZEN["limit_quote"])
-    zeilen_gesamt.append((l, "Festgefahrene Partien", f"{zahl(lq * 100)} %",
-                          (f"{zahl(basis['limit_quote'] * 100)} %" if basis else "–"),
-                          f"höchstens {prozent(GRENZEN['limit_quote'][1])}",
-                          "Fast jede Partie endet regulär." if l == GRUEN else
-                          "Zu viele Partien kommen nicht zum Ende (Rundenlimit)."))
-    if l != GRUEN:
-        todo.append(f"{l} **Festgefahrene Partien:** Bots erreichen oft das Rundenlimit. "
-                    "Vermutlich lohnt sich Bauen oder Kaufen nicht mehr genug.")
-
-    if basis:
-        d = r - basis["runden_mittel"]
-        if l_runden == GRUEN and abs(d) >= 1:
-            todo.append(f"{INFO} **Spieldauer** hat sich spürbar verändert "
-                        f"({f'{d:+.1f}'.replace('.', ',')} Runden). Noch im grünen Bereich, aber gut zu wissen.")
-        if spielerzahl == 2:
-            d = (gesamt["siegquote_position"][0] - basis["siegquote_position"][0]) * 100
-            if zeilen_gesamt[1][0] == GRUEN and abs(d) >= 4:
-                todo.append(f"{INFO} **Startposition:** Der Startspieler gewinnt {d:+.0f} Prozentpunkte "
-                            "häufiger als vorher. Noch im grünen Bereich.")
-
-    zeilen_gesamt.append((INFO, "Spannung", f"{prozent(gesamt['knapp_quote'])} knappe Partien",
-                          (prozent(basis["knapp_quote"]) if basis else "–"), "–",
-                          f"Anteil der Partien, die mit höchstens 3 Ruf Abstand entschieden werden "
-                          f"(Ø Abstand {zahl(gesamt['abstand_mittel'])} Ruf)."))
-    lichter += [z[0] for z in zeilen_gesamt]
-
-    # Karten
-    zeilen_karten = []
-    for b in karten_berichte:
-        c = karten.get(b["karte"], {})
-        licht, text = karten_urteil(b, spielerzahl)
-        lichter.append(licht)
-        kosten = str(c.get("kosten", "–"))
-        if kosten_erwartung and c.get("effekte"):
-            try:
-                soll = kosten_erwartung(c)
-                kosten += f" (Faustformel ≈ {zahl(soll)})"
-                if isinstance(c.get("kosten"), int) and abs(soll - c["kosten"]) > 2:
-                    guenstig = c["kosten"] < soll
-                    richtung = "günstig" if guenstig else "teuer"
-                    q, (g_lo, g_hi) = b["siegquote"], fokus_grenzen(spielerzahl)[:2]
-                    if g_lo <= q <= g_hi:
-                        text += (f" Die Faustformel hält den Preis für zu {richtung}, "
-                                 "in der Simulation fällt das aber nicht auf.")
-                    elif (q > g_hi) == guenstig:
-                        text += f" Die Faustformel sieht das auch so (Preis wirkt zu {richtung})."
-                    else:
-                        text += (f" Die Faustformel hält den Preis dagegen für zu {richtung}. "
-                                 "Hier widersprechen sich beide, ein Spieltest klärt das am besten.")
-            except Exception:  # noqa: BLE001
-                pass
-        alt = basis_berichte.get(b["karte"])
-        if alt:
-            vorher = veraenderung(b["siegquote"], alt["siegquote"], "pp", 1)
-        elif basis is not None and b["karte"] not in basis_karten:
-            vorher = "neu"
-        else:
-            vorher = "–"
-        zeilen_karten.append((licht, c.get("name", b["karte"]), kosten,
-                              f"{prozent(b['siegquote'])} ± {b['unsicherheit'] * 100:.0f}",
-                              vorher, zahl(b["kaeufe"]), text))
-        if licht != GRUEN:
-            todo.append(f"{licht} **{c.get('name', b['karte'])}:** {text}")
-
-    schlimmstes = max(lichter, key=RANG.get, default=GRUEN)
-    if schlimmstes == INFO:
-        schlimmstes = GRUEN
-    titel, satz = GESAMT_TEXT[schlimmstes]
-
     z = ["## 🍺 Balance-Bericht (Simulation)", "",
-         f"> ### {schlimmstes} {titel}", f"> {satz}", ""]
+         f"> ### {licht} {titel}", f"> {satz}", ""]
 
-    # Was wurde geprüft?
-    teile = [f"**{tausend(gesamt['spiele'])} simulierte Partien** mit {spielerzahl} Bots"]
-    if basis is not None:
-        teile.append(f"verglichen mit dem Stand von `{basis_name}` (Spalte „vorher“)")
+    g0 = ergebnis[zahlen[0]]["gesamt"]
+    teile = [f"**{tausend(g0['spiele'])} simulierte Partien** je Spielerzahl "
+             f"({', '.join(str(n) for n in zahlen)} Spieler)"]
+    if mit_basis:
+        teile.append(f"verglichen mit dem Stand von `{basis_name}` („vorher“)")
     z.append("**Was wurde geprüft?** " + ", ".join(teile) + ".")
     if ziel:
         namen = [f"{karten.get(k, {}).get('name', k)} ({TYP_NAME.get(karten.get(k, {}).get('typ'), 'entfernt')})"
@@ -356,44 +344,138 @@ def markdown(gesamt, karten_berichte, karten, warnungen, *, spielerzahl=2, ziel=
         z.append("Dieser PR ändert keine Karten. Geprüft wurde nur, ob das Spiel als Ganzes rund läuft.")
     z.append("")
 
-    if zeilen_karten:
+    # Stimmen vom Stammtisch
+    stimmen = stammtisch.stimmen(ergebnis, karten, ziel=ziel, basis_karten=basis_karten,
+                                 gesamt=licht, kosten=lambda c, b, n: _kosten_text(c, b, n)[1])
+    z += ["### 🎭 Stimmen vom Stammtisch", "",
+          "_Erfundene Stammgäste lesen die Zahlen unten, jeder mit einem anderen Blick aufs Spiel._", ""]
+    for s in stimmen:
+        z += [f"**{s['emoji']} {s['name']}**, _{s['rolle']}_ · {s['daumen']}", f"> {s['text']}", ""]
+
+    # Karten
+    markt = [kid for kid in ziel if karten.get(kid, {}).get("typ") == "markt"]
+    if markt:
         z += ["### 🎯 Die Karten aus diesem PR", "",
-              "Ein Bot kauft die Karte bevorzugt, die anderen spielen normal. "
-              f"**Fair wäre eine Siegquote um {prozent(1 / spielerzahl)}**, "
-              f"grün ist alles zwischen {prozent(fokus_grenzen(spielerzahl)[0])} "
-              f"und {prozent(fokus_grenzen(spielerzahl)[1])}.", "",
-              "| | Karte | Kosten | Siegquote | vorher | Ø gekauft | Was heißt das? |",
-              "|---|---|---|---|---|---|---|"]
-        z += ["| " + " | ".join(zeile) + " |" for zeile in zeilen_karten]
+              "Ein Bot kauft die Karte bevorzugt, die anderen spielen normal. Fair wäre eine Siegquote von "
+              + ", ".join(f"{prozent(1 / n)} bei {n}" for n in zahlen) + " Spielern.", "",
+              "| Karte | Kosten | " + " | ".join(f"{n} Spieler" for n in zahlen) + " | Was heißt das? |",
+              "|---|---|" + "---|" * len(zahlen) + "---|"]
+        for kid in markt:
+            c = karten[kid]
+            zellen = []
+            urteile = []
+            for n in zahlen:
+                r = ergebnis[n]
+                b = r["karten"][kid]
+                lt, text = r["ampeln"]["karten"][kid]
+                urteile.append((RANG[lt], n, lt, text, b))
+                alt = r["basis_karten"].get(kid)
+                jetzt = f"{lt} {prozent(b['siegquote'])} ± {b['unsicherheit'] * 100:.0f}"
+                if alt:
+                    zellen.append(_vorher(jetzt, prozent(alt["siegquote"]),
+                                          abs(alt["siegquote"] - b["siegquote"]) < 0.01))
+                elif mit_basis and kid not in basis_karten:
+                    zellen.append(f"{jetzt}<br><sub>neu</sub>")
+                else:
+                    zellen.append(jetzt)
+            # Urteil: schlimmste Spielerzahl, bei Gleichstand die Hauptspielerzahl
+            urteile.sort(key=lambda u: (-u[0], u[1] != haupt))
+            _, n_schlecht, lt, text, b = urteile[0]
+            zusatz, soll = _kosten_text(c, b, n_schlecht)
+            if lt != GRUEN:
+                todo.append(f"{lt} **{c.get('name', kid)}** ({n_schlecht} Spieler): {text}{zusatz}")
+                text = f"Bei {n_schlecht} Spielern: {text}"
+            kosten = str(c.get("kosten", "–")) + (f" (Faustformel ≈ {zahl(soll)})" if soll is not None else "")
+            z.append(f"| {c.get('name', kid)} | {kosten} | " + " | ".join(zellen) + f" | {text}{zusatz} |")
         z.append("")
     nicht_markt = [k for k in ziel if karten.get(k, {}).get("typ") not in ("markt", None)]
     if nicht_markt:
         namen = ", ".join(karten[k].get("name", k) for k in nicht_markt)
         z += [f"_{namen}: Ausbauten, Anlässe und Startkarten lassen sich nicht einzeln im Duell testen. "
               "Ihre Wirkung steckt in den Werten zum Gesamtspiel unten"
-              + (" (achte auf die Spalte „vorher“)." if basis is not None else ".") + "_", ""]
+              + (" (achte auf „vorher“)." if mit_basis else ".") + "_", ""]
 
+    # Gesamtspiel je Spielerzahl
+    def zeile(name, ziel_txt, erklaerung, zelle):
+        return f"| {name} | " + " | ".join(zelle(n) for n in zahlen) + f" | {ziel_txt} | {erklaerung} |"
+
+    def z_runden(n):
+        r = ergebnis[n]
+        g, b = r["gesamt"], r["basis"]
+        return _vorher(f"{r['ampeln']['runden']} Ø {zahl(g['runden_mittel'])}",
+                       b and zahl(b["runden_mittel"]), b and abs(b["runden_mittel"] - g["runden_mittel"]) < 0.2)
+
+    def z_position(n):
+        r = ergebnis[n]
+        g, b = r["gesamt"], r["basis"]
+        gleich = b and abs(b["positions_abweichung"] - g["positions_abweichung"]) < 0.015
+        return _vorher(f"{r['ampeln']['position']} {_positionen(g)}", b and _positionen(b), gleich)
+
+    def z_limit(n):
+        r = ergebnis[n]
+        g, b = r["gesamt"], r["basis"]
+        return _vorher(f"{r['ampeln']['limit']} {zahl(g['limit_quote'] * 100)} %",
+                       b and f"{zahl(b['limit_quote'] * 100)} %",
+                       b and abs(b["limit_quote"] - g["limit_quote"]) < 0.002)
+
+    def z_knapp(n):
+        r = ergebnis[n]
+        g, b = r["gesamt"], r["basis"]
+        return _vorher(f"{INFO} {prozent(g['knapp_quote'])}", b and prozent(b["knapp_quote"]),
+                       b and abs(b["knapp_quote"] - g["knapp_quote"]) < 0.01)
+
+    rg2, rg3 = runden_grenzen(2), runden_grenzen(3)
+    runden_ziel = f"{rg2[0]}–{rg2[1]}" + (f" (ab 3 Sp.: {rg3[0]}–{rg3[1]})" if max(zahlen) > 2 else "")
+    sg = GRENZEN["startspieler_quote_2p"]
     z += ["### 📊 Das Spiel als Ganzes", "",
-          "| | Kennzahl | Jetzt | vorher | Ziel | Was heißt das? |",
-          "|---|---|---|---|---|---|"]
-    z += ["| " + " | ".join(zeile) + " |" for zeile in zeilen_gesamt]
-    z.append("")
+          "| Kennzahl | " + " | ".join(f"{n} Spieler" for n in zahlen) + " | Ziel | Was heißt das? |",
+          "|---|" + "---|" * len(zahlen) + "---|---|",
+          zeile("Spieldauer (Runden)", runden_ziel, "Wie lange eine Partie dauert.", z_runden),
+          zeile("Siege nach Sitzplatz", f"2 Sp.: {prozent(sg[0])}–{prozent(sg[1])}, sonst fair ± 6 Pkt.",
+                "Wie oft gewinnt, wer als 1., 2., … dran ist. Jeder Platz sollte gleich gute Chancen haben.",
+                z_position),
+          zeile("Festgefahrene Partien", f"≤ {prozent(GRENZEN['limit_quote'][1])}",
+                "Partien, die nicht regulär enden (Rundenlimit).", z_limit),
+          zeile("Knappe Partien", "–", "Anteil der Partien mit höchstens 3 Ruf Abstand. Je höher, desto spannender.",
+                z_knapp),
+          ""]
+
+    for n in zahlen:
+        r = ergebnis[n]
+        a, g, b = r["ampeln"], r["gesamt"], r["basis"]
+        lo, hi = runden_grenzen(n)[:2]
+        if a["runden"] != GRUEN:
+            art = "zu kurz, Aufbau lohnt sich kaum" if g["runden_mittel"] < lo else "zu lang"
+            todo.append(f"{a['runden']} **Spieldauer bei {n} Spielern:** Ø {zahl(g['runden_mittel'])} Runden "
+                        f"ist {art}. Prüfen, ob die Änderung das Spielende zu früh oder zu spät auslöst.")
+        elif b and abs(g["runden_mittel"] - b["runden_mittel"]) >= 1:
+            d = g["runden_mittel"] - b["runden_mittel"]
+            todo.append(f"{INFO} **Spieldauer bei {n} Spielern** hat sich spürbar verändert "
+                        f"({f'{d:+.1f}'.replace('.', ',')} Runden). Noch im grünen Bereich.")
+        if a["position"] != GRUEN:
+            todo.append(f"{a['position']} **Sitzplatz bei {n} Spielern:** Die Siege sind ungleich verteilt "
+                        f"({_positionen(g)}). Ein Platz ist im Vorteil.")
+        elif b and abs(g["positions_abweichung"] - b["positions_abweichung"]) >= 0.04:
+            todo.append(f"{INFO} **Sitzplatz bei {n} Spielern:** Die Verteilung hat sich verschoben "
+                        f"({_positionen(b)} → {_positionen(g)}). Noch im grünen Bereich.")
+        if a["limit"] != GRUEN:
+            todo.append(f"{a['limit']} **Festgefahrene Partien bei {n} Spielern:** "
+                        f"{zahl(g['limit_quote'] * 100)} % erreichen das Rundenlimit. "
+                        "Vermutlich lohnt sich Bauen oder Kaufen nicht mehr genug.")
 
     z += ["### 💡 Was jetzt?", ""]
     todo.sort(key=lambda t: -RANG.get(t.split(" ", 1)[0], 0))
     if any(not t.startswith(INFO) for t in todo):
         z += [f"- {t}" for t in todo]
-    elif todo:
-        z += ["- ✅ Aus Sicht der Simulation gibt es nichts zu tun."] + [f"- {t}" for t in todo]
     else:
-        z.append("- ✅ Aus Sicht der Simulation gibt es nichts zu tun.")
+        z += ["- ✅ Aus Sicht der Simulation gibt es nichts zu tun."] + [f"- {t}" for t in todo]
     z += [f"- ⚠️ {w}" for w in warnungen]
     z.append("- 🎲 Die Bots sind einfach gestrickt. Ein echter Spieltest am Tisch ist immer besser: "
              "Ergebnis gern als Spieltest-Issue melden.")
     z.append("")
 
     # Erklärung für Neulinge
-    g = fokus_grenzen(spielerzahl)
+    g = fokus_grenzen(2)
     z += ["<details><summary>📖 <b>Wie lese ich diesen Bericht?</b></summary>", "",
           "**Die Ampel**",
           "- 🟢 im Zielbereich, alles gut",
@@ -401,51 +483,63 @@ def markdown(gesamt, karten_berichte, karten, warnungen, *, spielerzahl=2, ziel=
           "- 🔴 deutlich daneben: die Änderung sollte vermutlich angepasst werden",
           "- ℹ️ nur zur Information, ohne Bewertung",
           "",
+          "Das Gesamturteil oben ist die schlechteste Ampel über alle Spielerzahlen. "
           "Keine Ampel blockiert den PR. Die Entscheidung treffen Menschen.",
           "",
           "**Die Begriffe**",
           "- **Bots:** Computer-Spieler, die nach einfachen Regeln Karten kaufen und bauen. "
           "Sie spielen tausende Partien in wenigen Sekunden.",
+          "- **Stimmen vom Stammtisch:** erfundene Figuren, die die Zahlen aus ihrer Sicht kommentieren. "
+          "Ihre Meinung wird nach festen Regeln aus den Simulationsergebnissen abgeleitet, "
+          "sie haben nicht selbst gespielt.",
           "- **Siegquote (Fokus-Duell):** Ein Bot kauft die neue Karte bevorzugt (bis zu 3 Stück), "
           "die anderen spielen ganz normal. Gewinnt der Fokus-Bot viel öfter als fair, "
           "ist die Karte zu stark. Gewinnt er viel seltener, ist sie zu schwach. "
-          f"Grün: {prozent(g[0])}–{prozent(g[1])}, gelb: {prozent(g[2])}–{prozent(g[3])}.",
+          f"Bei 2 Spielern: grün {prozent(g[0])}–{prozent(g[1])}, gelb {prozent(g[2])}–{prozent(g[3])}. "
+          "Bei mehr Spielern: fair ± 10 Punkte grün, ± 15 Punkte gelb.",
           "- **± Zahl:** die Messungenauigkeit. Bei „48 % ± 4“ liegt der wahre Wert ziemlich sicher "
           "zwischen 44 % und 52 %.",
-          "- **vorher:** derselbe Wert mit den Karten vor diesem PR. „+5 Pkt.“ heißt: "
-          "5 Prozentpunkte mehr als vorher. „neu“ heißt: Die Karte gab es vorher nicht.",
-          "- **Ø gekauft:** wie viele Exemplare der Fokus-Bot pro Partie im Schnitt kauft. "
-          "Sehr niedrige Werte heißen: Die Karte war meist zu teuer oder nicht attraktiv.",
+          "- **vorher:** derselbe Wert mit den Karten vor diesem PR. „neu“ heißt: Die Karte gab es vorher nicht.",
           "- **Faustformel:** ein Richtwert für die Kosten, berechnet aus den Effekten der Karte "
           "(siehe `docs/BALANCE.md`). Weichen Kosten und Faustformel um mehr als 2 ab, lohnt ein Blick.",
-          "- **Fairness der Startposition:** Wie oft gewinnt, wer die Partie beginnt? Fair ist ungefähr die Hälfte.",
+          "- **Siege nach Sitzplatz:** Bei 2 Spielern steht dort, wie oft der Startspieler gewinnt. "
+          "Bei mehr Spielern stehen die Siegquoten aller Plätze, z. B. „26 / 27 / 23 / 24 %“.",
           "- **Festgefahrene Partien:** Partien, die nach "
           f"{PARAMETER['max_runden']} Runden abgebrochen werden, weil keiner das Ende auslöst.",
           "",
           "</details>", ""]
 
     # Details
-    p10, p90 = gesamt["runden_p10_p90"]
-    mn, mx = gesamt["runden_min_max"]
-    z += ["<details><summary>🔬 <b>Details für Tüftler</b></summary>", "",
-          f"- Spieldauer: Ø {zahl(gesamt['runden_mittel'])} Runden, 80 % der Partien zwischen "
-          f"{p10} und {p90} (kürzeste {mn}, längste {mx})",
-          f"- Ruf: Ø {zahl(gesamt['punkte_mittel'])} je Spieler, Ø {zahl(gesamt['sieger_punkte_mittel'])} beim Sieger",
-          "- Siege nach Startposition: " + " / ".join(prozent(x) for x in gesamt["siegquote_position"]),
-          "- Wie Partien enden: " + ", ".join(
-              f"{ENDE_NAME.get(k, k)} {zahl(v * 100)} %"
-              for k, v in sorted(gesamt["spielende"].items(), key=lambda kv: -kv[1])),
-          "- Meistgekaufte Marktkarten (Ø pro Partie, alle Bots): " + ", ".join(
-              f"{karten.get(k, {}).get('name', k)} {zahl(v)}" for k, v in gesamt["meistgekauft"]),
-          ]
-    for b in karten_berichte:
-        alt = basis_berichte.get(b["karte"])
-        if alt:
-            z.append(f"- {karten.get(b['karte'], {}).get('name', b['karte'])} vorher: "
-                     f"Siegquote {prozent(alt['siegquote'])}, Ø gekauft {zahl(alt['kaeufe'])}")
-    if karten_berichte:
-        z.append(f"- Fokus-Duell: {tausend(karten_berichte[0]['partien'])} Partien je Karte, Sitzplätze wechseln")
-    z += ["- Grenzwerte und Methode: `tools/simulieren.py` und `docs/BALANCE.md`", "", "</details>", ""]
+    z += ["<details><summary>🔬 <b>Details für Tüftler</b></summary>", ""]
+    for n in zahlen:
+        r = ergebnis[n]
+        g = r["gesamt"]
+        p10, p90 = g["runden_p10_p90"]
+        mn, mx = g["runden_min_max"]
+        z += [f"**{n} Spieler**",
+              f"- Spieldauer: Ø {zahl(g['runden_mittel'])} Runden, 80 % der Partien zwischen "
+              f"{p10} und {p90} (kürzeste {mn}, längste {mx})",
+              f"- Ruf: Ø {zahl(g['punkte_mittel'])} je Spieler, Ø {zahl(g['sieger_punkte_mittel'])} beim Sieger, "
+              f"Ø Abstand Sieger zu Platz 2: {zahl(g['abstand_mittel'])}",
+              "- Siege nach Sitzplatz: " + " / ".join(prozent(x) for x in g["siegquote_position"]),
+              "- Wie Partien enden: " + ", ".join(
+                  f"{ENDE_NAME.get(k, k)} {zahl(v * 100)} %"
+                  for k, v in sorted(g["spielende"].items(), key=lambda kv: -kv[1])),
+              "- Meistgekaufte Marktkarten (Ø pro Partie, alle Bots): " + ", ".join(
+                  f"{karten.get(k, {}).get('name', k)} {zahl(v)}" for k, v in g["meistgekauft"])]
+        for kid, b in r["karten"].items():
+            alt = r["basis_karten"].get(kid)
+            txt = (f"- {karten[kid].get('name', kid)}: Siegquote {prozent(b['siegquote'])}, "
+                   f"Ø gekauft {zahl(b['kaeufe'])}")
+            if alt:
+                txt += f" (vorher {prozent(alt['siegquote'])}, Ø gekauft {zahl(alt['kaeufe'])})"
+            z.append(txt)
+        z.append("")
+    erste = next((b for r in ergebnis.values() for b in r["karten"].values()), None)
+    if erste:
+        z.append(f"Fokus-Duell: {tausend(erste['partien'])} Partien je Karte und Spielerzahl, Sitzplätze wechseln.")
+    z += ["Grenzwerte und Methode: `tools/simulieren.py`, `tools/stammtisch.py` und `docs/BALANCE.md`", "",
+          "</details>", ""]
 
     z.append("_Die Simulation ersetzt keinen echten Spieltest. Sie zeigt nur grobe Ausreißer._")
     return "\n".join(z)
@@ -453,8 +547,10 @@ def markdown(gesamt, karten_berichte, karten, warnungen, *, spielerzahl=2, ziel=
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--partien", type=int, default=2000)
-    ap.add_argument("--spieler", type=int, default=2)
+    ap.add_argument("--partien", type=int, default=2000, help="Partien je Spielerzahl")
+    ap.add_argument("--duell-partien", type=int, default=0,
+                    help="Partien je Fokus-Duell (Standard: max(400, partien/3))")
+    ap.add_argument("--spieler", default="2,3,4", help="kommagetrennte Spielerzahlen, z. B. 2 oder 2,3,4")
     ap.add_argument("--pakete", default="basis", help="kommagetrennt, z. B. basis,heuriger")
     ap.add_argument("--karten", default="", help="kommagetrennte Karten-IDs")
     ap.add_argument("--geaendert", default="", help="Git-Basis, z. B. origin/main")
@@ -464,6 +560,7 @@ def main():
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
 
+    spielerzahlen = sorted({int(s) for s in str(args.spieler).split(",") if s.strip()})
     pakete = lade_pakete()
     aktiv = args.pakete.split(",")
     ziel = [k for k in args.karten.split(",") if k]
@@ -477,41 +574,25 @@ def main():
     markt_ziel = [k for k in ziel if karten.get(k, {}).get("typ") == "markt"]
     if args.alle_karten:
         markt_ziel = sorted(k for k, c in karten.items() if c["typ"] == "markt")
+        ziel = ziel + [k for k in markt_ziel if k not in ziel]
 
-    n_duell = max(400, args.partien // 3)
-    ergebnisse = spiele(karten, args.partien, args.spieler, seed=args.seed)
-    gesamt = gesamtbericht(ergebnisse, args.spieler, karten)
-    berichte = [kartenbericht(karten, kid, n=n_duell, spielerzahl=args.spieler, seed=args.seed + 7)
-                for kid in markt_ziel]
-
-    # Vergleich mit der Basis (gleiche Engine, gleiche Zufallszahlen)
-    basis = None
-    basis_karten = {}
-    basis_berichte = {}
-    if args.geaendert and not args.ohne_vergleich:
-        with tempfile.TemporaryDirectory() as tmp:
+    n_duell = args.duell_partien or max(400, args.partien // 3)
+    with tempfile.TemporaryDirectory() as tmp:
+        basis_karten = None
+        if args.geaendert and not args.ohne_vergleich:
             bp = basis_pakete(args.geaendert, Path(tmp))
             if bp is not None:
                 basis_karten = alle_karten(bp, [p for p in aktiv if p in bp])
-                try:
-                    basis = gesamtbericht(spiele(basis_karten, args.partien, args.spieler, seed=args.seed),
-                                          args.spieler, basis_karten)
-                    for kid in markt_ziel:
-                        if basis_karten.get(kid, {}).get("typ") == "markt":
-                            basis_berichte[kid] = kartenbericht(basis_karten, kid, n=n_duell,
-                                                                spielerzahl=args.spieler, seed=args.seed + 7)
-                except Exception as e:  # noqa: BLE001 - z. B. alte Karten passen nicht zur neuen Engine
-                    print(f"Hinweis: Basis-Simulation fehlgeschlagen ({e})", file=sys.stderr)
-                    basis, basis_berichte = None, {}
+        ergebnis = bewerte(auswerten(karten, markt_ziel, spielerzahlen, args.partien, args.seed,
+                                     n_duell, basis_karten))
 
     warnungen = []
     entfernt = [k for k in ziel if k not in karten]
     if entfernt:
         warnungen.append("Entfernte Karten: " + ", ".join(entfernt))
 
-    md = markdown(gesamt, berichte, karten, warnungen, spielerzahl=args.spieler, ziel=ziel,
-                  basis=basis, basis_name=args.geaendert.removeprefix("origin/"), basis_karten=basis_karten,
-                  basis_berichte=basis_berichte)
+    md = markdown(ergebnis, karten, warnungen, ziel=ziel,
+                  basis_name=args.geaendert.removeprefix("origin/"), basis_karten=basis_karten)
     print(md)
     if args.markdown:
         Path(args.markdown).write_text(md, encoding="utf-8")
